@@ -1,0 +1,42 @@
+schema_version = 1
+
+[project]
+package = "lilygo-ui-calculator"
+version = "0.1.0"
+app_id = "cc.lilygo.ui.Calculator"
+title = "Calculator"
+summary = "A touch-friendly scientific calculator for LILYGO UI"
+description = "A responsive calculator with an iPhone-inspired keypad and scientific functions in landscape orientation."
+license = "MIT"
+source_repo = "https://github.com/LILYGO-UI/lilygo-ui-calculator"
+homepage = "https://github.com/LILYGO-UI/lilygo-ui-calculator"
+categories = ["Utilities"]
+permissions = []
+
+[[project.authors]]
+name = "lbuque"
+email = "110239031@qq.com"
+
+[project.assets]
+icon = "assets/app-icon.png"
+
+[[project.assets.screenshots]]
+path = "assets/previews/preview1.png"
+caption = "iPhone-inspired calculator in portrait orientation"
+
+[project.compatibility]
+architectures = ["arm64"]
+min_appkit_version = "0.1.0"
+
+[project.launcher]
+order = 90
+
+[build]
+host_preset = "host-simulator"
+cross_preset = "cm0-cross"
+package_dir = "dist"
+
+[deploy]
+host = "raspberrypi.local"
+user = "pi"
+port = 22
