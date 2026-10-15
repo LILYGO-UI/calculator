@@ -2,7 +2,7 @@ schema_version = 1
 
 [project]
 package = "lilygo-ui-calculator"
-version = "0.1.0"
+version = "0.1.1"
 app_id = "cc.lilygo.ui.Calculator"
 title = "Calculator"
 summary = "A touch-friendly scientific calculator for LILYGO UI"
