@@ -37,6 +37,7 @@ private:
     };
 
     static void button_event(lv_event_t *event);
+    static void key_event(lv_event_t *event);
     static void size_changed_event(lv_event_t *event);
 
     lv_obj_t *create_keypad(lv_obj_t *parent, bool scientific);

@@ -135,6 +135,17 @@ int main(int argc, char **argv)
     assert(std::string(lv_label_get_text(display_text)) == "72");
     assert(std::string(lv_label_get_text(formula)) == "8 × 9 =");
 
+    auto *group = lv_group_create();
+    lv_group_add_obj(group, zero);
+    lv_group_focus_obj(zero);
+    for (const char key : std::string("c12+34="))
+        assert(lv_group_send_data(group, key) == LV_RESULT_OK);
+    assert(std::string(lv_label_get_text(display_text)) == "46");
+    for (const char key : std::string("c123")) lv_group_send_data(group, key);
+    lv_group_send_data(group, LV_KEY_BACKSPACE);
+    assert(std::string(lv_label_get_text(display_text)) == "12");
+    lv_group_delete(group);
+
     lv_tick_inc(20);
     lv_refr_now(display);
     const auto first        = framebuffer.front();

@@ -28,6 +28,13 @@ simulator for development and testing.
 The UI and state layer use LVGL. The calculation model is independent of LVGL
 and can be tested in isolation.
 
+## Physical keyboard
+
+TCA8418 and the simulator keyboard support digits, decimal point, `+ - * /`,
+`%`, `^`, parentheses, `=` to evaluate, `C` to clear, and Backspace/Delete to
+erase a digit. Arrow keys move between controls; Tab advances focus and Enter
+activates the focused key. The focus indicator stays inside each button.
+
 ## Development Environment
 
 Project identity, version, and package metadata come from [`lpm.toml`](lpm.toml).

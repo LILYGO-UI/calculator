@@ -21,6 +21,13 @@ LILYGO UI Calculator 是面向 LILYGO UI 的触控科学计算器，基于 C++17
 
 界面和状态层使用 LVGL；计算 Model 不依赖 LVGL，可独立测试。
 
+## 实体键盘
+
+TCA8418 键盘和模拟器键盘支持输入数字、小数点、`+ - * /`、`%`、`^` 和括号。
+按 `=` 计算结果，按 `C` 清空，按 Backspace 或 Delete 删除一位数字。
+方向键可在控件之间移动焦点，Tab 将焦点移至下一个控件，Enter 激活当前聚焦的按键。
+焦点指示框始终显示在按钮内部。
+
 ## 开发环境搭建
 
 项目标识、版本和软件包元数据由 [`lpm.toml`](lpm.toml) 提供。[`CMakePresets.json`](CMakePresets.json) 定义 `host-simulator` 和 `cm0-cross` 配置。

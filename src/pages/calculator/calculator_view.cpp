@@ -63,6 +63,7 @@ lv_obj_t *CalculatorView::create(lv_obj_t *parent)
     lv_obj_set_style_bg_color(surface_, lv_color_hex(components::color_page_background), 0);
     lv_obj_set_style_pad_row(surface_, 12, 0);
     lv_obj_add_event_cb(surface_, size_changed_event, LV_EVENT_SIZE_CHANGED, this);
+    lv_obj_add_event_cb(surface_, key_event, LV_EVENT_KEY, this);
 
     display_panel_ = lv_obj_create(surface_);
     lv_obj_set_name_static(display_panel_, "calculator_display_panel");
@@ -95,6 +96,7 @@ lv_obj_t *CalculatorView::create(lv_obj_t *parent)
     lv_label_bind_text(display_label_, view_model_.display_subject(), nullptr);
 
     keypad_panel_ = lv_obj_create(surface_);
+    lv_obj_add_flag(keypad_panel_, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_set_name_static(keypad_panel_, "calculator_keypad");
     lv_obj_set_width(keypad_panel_, LV_PCT(100));
     lv_obj_set_style_border_width(keypad_panel_, 0, 0);
@@ -129,6 +131,7 @@ void CalculatorView::destroy() noexcept
 lv_obj_t *CalculatorView::create_keypad(lv_obj_t *parent, bool scientific)
 {
     auto *grid = lv_obj_create(parent);
+    lv_obj_add_flag(grid, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_set_name_static(grid, scientific ? "calculator_scientific_keypad" : "calculator_basic_keypad");
     lv_obj_set_height(grid, LV_PCT(100));
     lv_obj_set_style_border_width(grid, 0, 0);
@@ -233,6 +236,7 @@ void CalculatorView::create_keypad_button(lv_obj_t *grid, const char *name, cons
 {
     if (button_count_ >= button_records_.size()) return;
     auto *button = lv_button_create(grid);
+    lv_obj_add_flag(button, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_set_name_static(button, name);
     lv_obj_set_grid_cell(button, LV_GRID_ALIGN_STRETCH, column, column_span, LV_GRID_ALIGN_STRETCH, row, 1);
     lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, 0);
@@ -270,6 +274,37 @@ void CalculatorView::button_event(lv_event_t *event)
 void CalculatorView::size_changed_event(lv_event_t *event)
 {
     static_cast<CalculatorView *>(lv_event_get_user_data(event))->apply_layout();
+}
+
+void CalculatorView::key_event(lv_event_t *event)
+{
+    auto *view = static_cast<CalculatorView *>(lv_event_get_user_data(event));
+    const auto key = lv_event_get_key(event);
+    CalculatorCommand command;
+    if (key >= '0' && key <= '9') {
+        view->view_model_.perform(CalculatorCommand::digit, static_cast<char>(key));
+    } else {
+        switch (key) {
+            case '.': command = CalculatorCommand::decimal; break;
+            case '+': command = CalculatorCommand::add; break;
+            case '-': command = CalculatorCommand::subtract; break;
+            case '*': command = CalculatorCommand::multiply; break;
+            case '/': command = CalculatorCommand::divide; break;
+            case '=': command = CalculatorCommand::equals; break;
+            case '%': command = CalculatorCommand::percent; break;
+            case '^': command = CalculatorCommand::power; break;
+            case '(': command = CalculatorCommand::open_parenthesis; break;
+            case ')': command = CalculatorCommand::close_parenthesis; break;
+            case 'c':
+            case 'C': command = CalculatorCommand::clear; break;
+            case LV_KEY_BACKSPACE:
+            case LV_KEY_DEL: command = CalculatorCommand::backspace; break;
+            default: return; // Arrows navigate; Enter activates the focused key.
+        }
+        view->view_model_.perform(command);
+    }
+    view->refresh_visual_state();
+    lv_event_stop_bubbling(event);
 }
 
 void CalculatorView::apply_layout() noexcept
