@@ -6,7 +6,9 @@ project(${LILYGO_UI_CMAKE_PROJECT_NAME} LANGUAGES C CXX)
 include(GNUInstallDirs)
 include(CTest)
 # Match the 50 Hz panel in LVGL, the statically linked SDK, and this application.
-add_compile_definitions(LV_DEF_REFR_PERIOD=20)
+if(NOT LILYGO_UI_PLATFORM STREQUAL "k230")
+    add_compile_definitions(LV_DEF_REFR_PERIOD=20)
+endif()
 find_package(LilyGoUI CONFIG REQUIRED)
 
 configure_file(
@@ -110,7 +112,13 @@ endif()
 
 # New applications have no legacy CM0 package to replace. Add Debian migration
 # fields only when this project supersedes an actually published package.
-set(CPACK_GENERATOR DEB)
+if(LILYGO_UI_TARGET_OS STREQUAL "buildroot")
+    set(CPACK_GENERATOR TGZ)
+    set(CPACK_PACKAGE_FILE_NAME "${LILYGO_UI_PACKAGE_NAME}-${LILYGO_UI_VERSION}-${LILYGO_UI_PLATFORM}-${CMAKE_SYSTEM_PROCESSOR}")
+    set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+else()
+    set(CPACK_GENERATOR DEB)
+endif()
 set(CPACK_PACKAGE_NAME "${LILYGO_UI_PACKAGE_NAME}")
 set(CPACK_PACKAGE_VERSION "${LILYGO_UI_VERSION}")
 if(LILYGO_UI_VERSION MATCHES
@@ -134,10 +142,25 @@ set(CPACK_DEBIAN_APP_PACKAGE_NAME "${LILYGO_UI_PACKAGE_NAME}")
 set(CPACK_DEBIAN_APP_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_APP_PACKAGE_DEPENDS
     "libc6, libstdc++6, libdrm2, libfreetype6, lilygo-ui-appkit-dev (>= ${LILYGO_UI_MIN_APPKIT_VERSION})")
+if(LILYGO_UI_GRAPHICS_DEBIAN_DEPENDS)
+    string(APPEND CPACK_DEBIAN_APP_PACKAGE_DEPENDS
+        ", ${LILYGO_UI_GRAPHICS_DEBIAN_DEPENDS}")
+endif()
 set(CPACK_DEBIAN_APP_PACKAGE_SECTION "utils")
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
-if(CMAKE_CROSSCOMPILING AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+if(LILYGO_UI_DEBIAN_ARCHITECTURE)
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE
-        "${LILYGO_UI_PACKAGE_ARCHITECTURE}")
+        "${LILYGO_UI_DEBIAN_ARCHITECTURE}")
+elseif(CMAKE_CROSSCOMPILING AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+    # Older pinned AppKit revisions do not export the Debian architecture.
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE arm64)
+endif()
+if("DEB" IN_LIST CPACK_GENERATOR AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(NOT COMMAND lilygo_ui_enable_debian_dependencies)
+        message(FATAL_ERROR
+            "Debian packaging requires an AppKit SDK with automatic runtime dependency analysis. "
+            "Update the pinned AppKit or select a compatible SDK with "
+            "-DLilyGoUI_DIR=/path/to/cm0-appkit.")
+    endif()
+    lilygo_ui_enable_debian_dependencies()
 endif()
 include(CPack)

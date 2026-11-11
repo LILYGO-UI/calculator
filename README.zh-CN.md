@@ -4,7 +4,7 @@
 
 LILYGO UI Calculator 是面向 LILYGO UI 的触控科学计算器，基于 C++17、[LILYGO UI AppKit](https://github.com/LILYGO-UI/cm0-appkit) 和 LVGL 9.5 构建。竖屏提供接近 iPhone 计算器的四列基础键盘，横屏自动展开科学计算键区。
 
-项目提供 CM0 ARM64 Linux 设备构建，以及用于开发和测试的 SDL2 桌面模拟器。
+项目提供 CM0 ARM64 和 K230 Debian RISC-V 设备构建，以及用于开发和测试的 SDL2 桌面模拟器。
 
 ## 预览
 
@@ -30,7 +30,7 @@ TCA8418 键盘和模拟器键盘支持输入数字、小数点、`+ - * /`、`%`
 
 ## 开发环境搭建
 
-项目标识、版本和软件包元数据由 [`lpm.toml`](lpm.toml) 提供。[`CMakePresets.json`](CMakePresets.json) 定义 `host-simulator` 和 `cm0-cross` 配置。
+项目标识、版本和软件包元数据由 [`lpm.toml`](lpm.toml) 提供。[`CMakePresets.json`](CMakePresets.json) 定义 `host-simulator`、`cm0-cross` 和 `k230-debian` 配置。
 
 ### 获取源码
 
@@ -63,7 +63,31 @@ lpm pack
 
 `lpm start` 启动 SDL2 模拟器，`lpm test` 运行核心、ViewModel 以及横竖屏渲染测试，`lpm pack` 生成输出到 `dist/` 的 ARM64 `.deb`。渲染结果位于 `build/host-simulator`，修改 UI 后请检查生成的 PPM 图片。
 
-底层 CMake 命令及设备构建细节见英文 README；界面验收要求见 [UI 开发规范](docs/01-user-interface.md)。
+### 使用 LPM 构建 K230 Debian riscv64
+
+需要包含 K230 和 macOS LLVM 支持的 AppKit 源码 SDK。当前工作区可共用
+`../cm0-appkit`，准备一次 sysroot，再为本应用选择 SDK：
+
+```sh
+brew install llvm lld dpkg
+python3 ../cm0-appkit/tools/prepare-riscv64-sysroot.py
+cmake --preset k230-debian -DLilyGoUI_DIR="$PWD/../cm0-appkit"
+lpm pack --arch riscv64
+```
+
+输出为 `dist/<package>_<version>_riscv64.deb`。配置会记住 SDK 路径，后续运行
+`lpm pack --arch riscv64` 即可。支持保存目标的 LPM 版本也可先运行
+`lpm set-target k230`，之后只运行 `lpm pack`。
+`lpm pack --arch arm64` 构建原有 CM0 目标；两套 sysroot 都准备好后可运行
+`lpm pack --all-architectures`。
+
+独立检出时，请将 `third_party/cm0-appkit` 固定到包含这些功能的兼容发布版本，
+并在准备和配置命令中使用该目录。首次配置默认使用子模块，也可通过
+`LILYGO_UI_APPKIT_DIR` 环境变量指定 SDK。Linux 使用 `riscv64-linux-gnu-gcc/g++`
+交叉编译器和同一准备脚本。默认 sysroot 在所选 SDK 的
+`.cache/k230-debian/sysroot`，可用
+`-DLILYGO_UI_DEBIAN_SYSROOT=/path/to/sysroot` 覆盖。该 Debian 目标不能使用 Buildroot sysroot。
+
 
 ## 文档
 

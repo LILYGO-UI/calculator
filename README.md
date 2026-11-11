@@ -7,8 +7,8 @@ built with C++17, [LILYGO UI AppKit](https://github.com/LILYGO-UI/cm0-appkit)
 and LVGL 9.5. It provides an iPhone-inspired four-column keypad in portrait
 orientation and expands to a scientific keypad in landscape orientation.
 
-The project provides a CM0 ARM64 Linux device build and an SDL2 desktop
-simulator for development and testing.
+The project provides CM0 ARM64 and K230 Debian RISC-V device builds, plus an
+SDL2 desktop simulator for development and testing.
 
 ## Preview
 
@@ -38,8 +38,8 @@ activates the focused key. The focus indicator stays inside each button.
 ## Development Environment
 
 Project identity, version, and package metadata come from [`lpm.toml`](lpm.toml).
-[`CMakePresets.json`](CMakePresets.json) defines the `host-simulator` and
-`cm0-cross` configurations. Run commands from the repository root.
+[`CMakePresets.json`](CMakePresets.json) defines the `host-simulator`,
+`cm0-cross`, and `k230-debian` configurations. Run commands from the repository root.
 
 ### Get the Source
 
@@ -51,7 +51,7 @@ git submodule update --init --recursive
 
 AppKit is consumed directly from `third_party/cm0-appkit`; no separate AppKit
 installation is required for the simulator. Its bundled LVGL archive is used
-by default, with network fetching disabled in both presets.
+by default, with network fetching disabled in the presets.
 
 ### Host Dependencies
 
@@ -131,6 +131,34 @@ lpm pack
 The `cm0-cross` preset targets CM0 Raspberry Pi OS on AArch64, uses a Release
 build, and writes an ARM64 `.deb` package to `dist/`. The first build downloads
 the pinned CM0 BSP and caches its sysroot under `.cache/cm0-bsp/`.
+
+### K230 Debian riscv64 with LPM
+
+Use an AppKit source SDK containing K230 and macOS LLVM support. In this
+workspace, prepare the shared SDK once and select it for this application:
+
+```sh
+brew install llvm lld dpkg
+python3 ../cm0-appkit/tools/prepare-riscv64-sysroot.py
+cmake --preset k230-debian -DLilyGoUI_DIR="$PWD/../cm0-appkit"
+lpm pack --arch riscv64
+```
+
+The package is written to `dist/<package>_<version>_riscv64.deb`. The preset
+keeps the SDK selection; subsequent builds only need `lpm pack --arch riscv64`.
+With an LPM version supporting saved targets, run `lpm set-target k230` once
+and then use `lpm pack` directly. `lpm pack --arch arm64` selects the original
+CM0 build; `lpm pack --all-architectures` builds both when both sysroots are ready.
+
+For a standalone checkout, update the pinned `third_party/cm0-appkit` to a
+compatible published revision and use that SDK path instead of `../cm0-appkit`
+in both preparation and configuration commands. Fresh configurations default to
+the pinned SDK; `LILYGO_UI_APPKIT_DIR` can override that initial selection.
+On Linux, install `riscv64-linux-gnu-gcc/g++` and run the same preparation script.
+The default Debian development sysroot is `.cache/k230-debian/sysroot` inside
+the selected SDK; override it with `-DLILYGO_UI_DEBIAN_SYSROOT=/path/to/sysroot`.
+Buildroot sysroots are not compatible with this Debian target.
+
 
 <details>
 <summary>Underlying CMake commands</summary>
